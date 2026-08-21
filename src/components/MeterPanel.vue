@@ -38,12 +38,13 @@ function polar(cents: number, radius: number) {
 const ticks = Array.from({ length: 21 }, (_, index) => {
   const cents = -RANGE + index * 5
   const major = cents % 25 === 0
+  const centre = cents === 0
   const outer = polar(cents, 196)
-  const inner = polar(cents, major ? 174 : 185)
-  return { cents, major, x1: outer.x, y1: outer.y, x2: inner.x, y2: inner.y }
+  const inner = polar(cents, centre ? 158 : major ? 174 : 185)
+  return { cents, major, centre, x1: outer.x, y1: outer.y, x2: inner.x, y2: inner.y }
 })
 
-const labels = [-50, -25, 0, 25, 50].map((cents) => ({
+const labels = [-50, -25, 25, 50].map((cents) => ({
   cents,
   text: String(Math.abs(cents)),
   ...polar(cents, 160),
@@ -204,7 +205,7 @@ const verdict = computed(() => {
           :x2="tick.x2"
           :y2="tick.y2"
           class="dial__tick"
-          :class="{ 'dial__tick--major': tick.major }"
+          :class="{ 'dial__tick--major': tick.major, 'dial__tick--centre': tick.centre }"
         />
 
         <text
@@ -234,11 +235,11 @@ const verdict = computed(() => {
           :y2="pin.y2"
         />
 
-        <g class="needle needle--shadow" :style="{ transform: `translate(5px, 7px) rotate(${angle}deg)` }">
-          <polygon points="175.5,236 184.5,236 181.2,31 178.8,31" />
+        <g class="needle needle--shadow" :style="{ transform: `translate(2px, 4px) rotate(${angle}deg)` }">
+          <polygon points="175.5,236 184.5,236 181.2,44 178.8,44" />
         </g>
         <g class="needle" :style="{ transform: `rotate(${angle}deg)` }">
-          <polygon points="175.5,236 184.5,236 181.2,31 178.8,31" fill="url(#needleBody)" />
+          <polygon points="175.5,236 184.5,236 181.2,44 178.8,44" fill="url(#needleBody)" />
         </g>
 
         <rect x="6" y="6" width="348" height="188" rx="7" fill="url(#glassSheen)" pointer-events="none" />
@@ -339,7 +340,7 @@ const verdict = computed(() => {
 }
 
 .dial__band {
-  fill: rgba(104, 122, 62, 0.16);
+  fill: rgba(104, 122, 62, 0.09);
   transition: fill 320ms ease;
 }
 .meter.is-tuned .dial__band {
@@ -354,6 +355,10 @@ const verdict = computed(() => {
 .dial__tick--major {
   stroke-width: 2.4;
   opacity: 0.9;
+}
+.dial__tick--centre {
+  stroke-width: 3;
+  opacity: 1;
 }
 
 .dial__pin {
@@ -395,7 +400,7 @@ const verdict = computed(() => {
   transform-origin: 180px 236px;
 }
 .needle--shadow polygon {
-  fill: rgba(40, 26, 14, 0.22);
+  fill: rgba(40, 26, 14, 0.14);
 }
 
 /* --- readout strip --- */
@@ -535,6 +540,75 @@ const verdict = computed(() => {
   }
   .lamp--sharp {
     justify-content: flex-end;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .meter {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    gap: 0.5rem;
+  }
+
+  /* The dial takes whatever height is left over instead of dictating it. The
+     SVG viewBox scales to fit and centres itself in the bezel. */
+  .meter__window {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    padding: 6px;
+  }
+  .meter__hood {
+    inset: 6px;
+  }
+  .dial {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .readout__letter {
+    font-size: 2rem;
+  }
+  .readout__hz {
+    font-size: 0.72rem;
+  }
+  .verdict {
+    padding-top: 0.45rem;
+  }
+  .verdict__word {
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+  }
+}
+
+@media (orientation: portrait) and (max-width: 560px) {
+  .meter {
+    gap: 0.6rem;
+  }
+  .meter__window {
+    padding: 7px;
+  }
+  .meter__hood {
+    inset: 7px;
+  }
+  .readout__letter {
+    font-size: 2.4rem;
+  }
+  .verdict {
+    padding-top: 0.5rem;
+  }
+  .verdict__word {
+    font-size: 0.95rem;
+  }
+}
+
+/* iPhone SE and friends: cap the dial so the last rows still clear the fold.
+   The SVG scales down inside the bezel rather than cropping. */
+@media (orientation: portrait) and (max-height: 700px) {
+  .dial {
+    max-height: 21dvh;
   }
 }
 </style>

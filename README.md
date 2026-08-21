@@ -54,3 +54,22 @@ src/composables/useTuner.ts  microphone, audio graph, analysis loop
 src/components/MeterPanel.vue  the meter, needle ballistics, lamps
 src/components/StringBay.vue   string selection
 ```
+
+## License
+
+[PolyForm Noncommercial 1.0.0](LICENSE.md).
+
+Free for anyone to use, host, fork and modify for any noncommercial purpose —
+personal use, hobby projects, study and teaching, schools, nonprofits, public
+research and government. Selling it, bundling it into a product, or otherwise
+using it for commercial advantage needs a separate licence from the copyright
+holder.
+
+Two things worth knowing:
+
+- This is **source available**, not open source in the OSI sense — a
+  noncommercial restriction is exactly what the OSI definition rules out. No
+  license grants both, so this is the trade for "not for commercial use".
+- The dependencies (Vue, Vite, TypeScript) are MIT and stay MIT. A production
+  build embeds Vue's runtime, so keep its copyright notice with anything you
+  redistribute.

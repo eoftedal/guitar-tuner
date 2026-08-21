@@ -401,4 +401,103 @@ function toggle() {
   text-transform: uppercase;
   color: var(--ink-faint);
 }
+
+/* A landscape phone has width to spare and almost no height. Drive the layout
+   from the viewport height instead: two columns, trimmed chrome, and a meter
+   that shrinks to whatever is left rather than setting the page height. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .shell {
+    display: flex;
+    min-height: 100dvh;
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  .panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+  }
+
+  /* Decorative details that cost vertical room. */
+  .screw,
+  .plate__model,
+  .ladder,
+  .footer__print {
+    display: none;
+  }
+
+  .plate {
+    align-items: center;
+    padding-bottom: 0.55rem;
+  }
+  .plate__name {
+    font-size: 1.5rem;
+  }
+  .power {
+    min-height: 36px;
+    padding: 0.5rem 1rem;
+  }
+
+  .panel__body {
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+    gap: 1rem;
+    padding: 0.7rem 0;
+  }
+  /* Undo the phone-portrait swap: side by side, the bay reads first again. */
+  .panel__body > :first-child {
+    order: 0;
+  }
+
+  .footer {
+    padding-top: 0.5rem;
+  }
+}
+
+/* Portrait phone: trim the enclosure detailing so the meter and the strings get
+   the height instead. */
+@media (orientation: portrait) and (max-width: 560px) {
+  .shell {
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  .panel {
+    padding: 0.8rem 0.85rem;
+    border-radius: 12px;
+  }
+
+  .screw,
+  .ladder,
+  .plate__model,
+  .footer__print {
+    display: none;
+  }
+
+  .plate {
+    align-items: center;
+    padding-bottom: 0.55rem;
+  }
+  .plate__name {
+    font-size: 1.6rem;
+  }
+  .power {
+    min-height: 40px;
+    padding: 0.55rem 1.05rem;
+  }
+
+  .panel__body {
+    gap: 0.85rem;
+    padding: 0.85rem 0;
+  }
+
+  .footer {
+    padding-top: 0.55rem;
+  }
+}
 </style>

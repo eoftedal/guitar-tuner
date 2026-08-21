@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { GuitarString } from '../lib/notes'
 
 const props = defineProps<{
@@ -13,8 +13,28 @@ const props = defineProps<{
 
 const emit = defineEmits<{ select: [value: GuitarString] }>()
 
-/** Tab order: thinnest string on top, the way a chord chart is drawn. */
-const rows = computed(() => [...props.strings].reverse())
+const ACROSS = '(orientation: portrait) and (max-width: 560px)'
+
+/** True when the strings run down the screen instead of across it. */
+const across = ref(typeof window !== 'undefined' && window.matchMedia(ACROSS).matches)
+let media: MediaQueryList | null = null
+
+function syncLayout(event: MediaQueryList | MediaQueryListEvent) {
+  across.value = event.matches
+}
+
+onMounted(() => {
+  media = window.matchMedia(ACROSS)
+  syncLayout(media)
+  media.addEventListener('change', syncLayout)
+})
+onBeforeUnmount(() => media?.removeEventListener('change', syncLayout))
+
+/**
+ * Stacked: thinnest string on top, the way a chord chart is drawn.
+ * Side by side: low E on the left, the way the tuning is spoken — E A D G B E.
+ */
+const rows = computed(() => (across.value ? [...props.strings] : [...props.strings].reverse()))
 
 /** Wound strings are drawn thicker, and the low E noticeably so. */
 const thickness = (gauge: number) => 1.6 + gauge * 4.2
@@ -77,7 +97,7 @@ function onKeydown(event: KeyboardEvent) {
               <span
                 class="string__wire"
                 :class="{ 'string__wire--wound': string.wound }"
-                :style="{ height: `${thickness(string.gauge)}px` }"
+                :style="{ '--gauge': `${thickness(string.gauge)}px` }"
               />
             </span>
 
@@ -272,6 +292,7 @@ function onKeydown(event: KeyboardEvent) {
   position: relative;
   display: block;
   width: 100%;
+  height: var(--gauge);
   border-radius: 2px;
   background: linear-gradient(180deg, #4c463c 0%, #cec5b1 38%, #8e8676 62%, #3a352d 100%);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
@@ -325,6 +346,16 @@ function onKeydown(event: KeyboardEvent) {
   }
 }
 
+@keyframes wire-shake-across {
+  0%,
+  100% {
+    transform: translateX(-1.2px);
+  }
+  50% {
+    transform: translateX(1.2px);
+  }
+}
+
 @keyframes wire-halo {
   50% {
     opacity: 0.28;
@@ -367,6 +398,150 @@ function onKeydown(event: KeyboardEvent) {
     --note: 2.3rem;
     --hz: 3rem;
     --gap: 0.55rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .bay {
+    --peg: 1.6rem;
+    --note: 2.1rem;
+    --hz: 2.8rem;
+    --gap: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .bay__title {
+    font-size: 0.6rem;
+  }
+  .bay__hint {
+    display: none;
+  }
+
+  /* 32px rows: under the 44px comfort target, but well clear of the 24px
+     minimum, and six rows still have to fit beside the meter. */
+  .string {
+    min-height: 32px;
+    padding-top: 0.15rem;
+    padding-bottom: 0.15rem;
+  }
+  .string__peg {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.62rem;
+  }
+  .string__letter {
+    font-size: 1.15rem;
+  }
+  .string__wire-track {
+    height: 1.1rem;
+  }
+}
+
+/* Portrait phones have no room for six stacked rows. The strings turn ninety
+   degrees and hang down the screen between nut and bridge, low E on the left —
+   which also stops the horizontal version reading as a ladder. */
+@media (orientation: portrait) and (max-width: 560px) {
+  .bay {
+    --peg-size: 1.55rem;
+    --wire-len: 3.1rem;
+    --stack-gap: 0.34rem;
+    gap: 0.55rem;
+  }
+
+  .bay__hint {
+    display: none;
+  }
+
+  .bay__list {
+    display: flex;
+    gap: 0.1rem;
+  }
+  .bay__list > li {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .string {
+    grid-template-columns: none;
+    grid-template-rows: var(--peg-size) var(--wire-len) auto;
+    justify-items: center;
+    gap: var(--stack-gap);
+    padding: 0.3rem 0.1rem;
+    min-height: 0;
+  }
+  .string::before {
+    inset: 2px 0.1rem;
+    background: linear-gradient(180deg, rgba(226, 122, 34, 0.2), rgba(226, 122, 34, 0.02) 72%);
+  }
+
+  .string__peg {
+    width: var(--peg-size);
+    height: var(--peg-size);
+    font-size: 0.62rem;
+  }
+
+  .string__wire-track {
+    order: 2;
+    width: 100%;
+    height: var(--wire-len);
+    justify-content: center;
+  }
+  .string__wire {
+    width: var(--gauge);
+    height: 100%;
+    background-image: linear-gradient(90deg, #4c463c 0%, #cec5b1 38%, #8e8676 62%, #3a352d 100%);
+  }
+  .string__wire--wound {
+    background-image:
+      repeating-linear-gradient(
+        164deg,
+        rgba(0, 0, 0, 0.42) 0 1px,
+        rgba(255, 255, 255, 0.24) 1px 2px,
+        rgba(0, 0, 0, 0) 2px 3.4px
+      ),
+      linear-gradient(90deg, #4c463c 0%, #cec5b1 38%, #8e8676 62%, #3a352d 100%);
+  }
+  .string__wire::after {
+    inset: 0 -5px;
+    background: linear-gradient(90deg, transparent, rgba(240, 230, 205, 0.5), transparent);
+  }
+  .string.is-ringing .string__wire {
+    animation-name: wire-shake-across;
+  }
+
+  .string__note {
+    order: 3;
+  }
+  .string__letter {
+    font-size: 1.15rem;
+  }
+  .string__hz {
+    display: none;
+  }
+
+  /* Nut and bridge lie across the top and bottom of the strings now. */
+  .bay__nut,
+  .bay__bridge {
+    left: 0;
+    right: 0;
+    bottom: auto;
+    width: auto;
+    height: 4px;
+  }
+  .bay__nut {
+    top: calc(0.65rem + var(--peg-size) + var(--stack-gap));
+    background: linear-gradient(180deg, #4a4137, #cbbfa8 45%, #6a5d4c);
+  }
+  .bay__bridge {
+    top: calc(0.65rem + var(--peg-size) + var(--stack-gap) + var(--wire-len));
+    background: linear-gradient(180deg, #3d352c, #8d7f69 45%, #4a4137);
+  }
+}
+
+@media (orientation: portrait) and (max-height: 700px) {
+  .bay {
+    --peg-size: 1.4rem;
+    --wire-len: 2.6rem;
   }
 }
 </style>
